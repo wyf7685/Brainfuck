@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+namespace bf {
 using std::string;
 using std::vector;
 
@@ -25,7 +26,7 @@ char read_stdin() {
   if (std::cin.eof())
     return '\0';
   char byte;
-  std::cin >> byte;
+  std::cin.read(&byte, 1);
   return byte;
 }
 
@@ -224,17 +225,19 @@ void execute_code(const string &code) {
   }
 }
 
-long double timer_with(std::function<void()> call) {
+inline long double timer_with(std::function<void()> call) {
   using namespace std::chrono;
   auto start = steady_clock::now();
   call();
   auto end = steady_clock::now();
 
   auto duration = duration_cast<microseconds>(end - start);
-  return static_cast<long double>(duration.count()) / 1000000;
+  return static_cast<long double>(duration.count()) / 1000 / 1000;
 }
+} // namespace bf
 
 int main(int argc, char **argv) {
+  using namespace bf;
   vector<string> args;
   for (int i = 1; i < argc; i++)
     args.emplace_back(argv[i]);
