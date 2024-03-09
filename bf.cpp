@@ -102,7 +102,11 @@ string read_code_file(const string &filename) {
   return code;
 }
 
+#ifdef BF_DEBUG
 static const string ValidCode = "><+-[],.%";
+#else
+static const string ValidCode = "><+-[],.";
+#endif
 
 string clean_code(const string &code) {
   string result;
@@ -121,11 +125,11 @@ string clean_code(const string &code) {
   return result;
 }
 
-string split_lines(string code) {
+string split_lines(string code, int line_size = 60) {
   string result;
-  while (code.size() >= 70) {
-    result += code.substr(0, 70) + "\n";
-    code = code.substr(70);
+  while (code.size() >= line_size) {
+    result += code.substr(0, line_size) + "\n";
+    code = code.substr(line_size);
   }
   result += code;
   return result;
@@ -213,13 +217,17 @@ void execute_code(const string &code) {
       }
       loop_stack.pop();
       break;
+#ifdef BF_DEBUG
     case '%': {
       std::cout << "\nDebug: " << pointer << " [";
       for (size_t i = 0; i < 15; i++) {
+        if (pointer == i)
+          std::cout << "*";
         std::cout << memory[i] << ", ";
       }
       std::cout << memory[15] << "]" << std::endl;
     } break;
+#endif // BF_DEBUG
     }
     idx++;
   }
