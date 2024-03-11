@@ -17,7 +17,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir bin
-          g++ bf.cpp -O3 -o bin/bf
+          g++ ./src/*.cpp -O3 -o bin/bf
       - uses: actions/upload-artifact@v4
         with:
           name: bf_ubuntu
@@ -30,7 +30,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir bin
-          g++ bf.cpp -O3 -o bin/bf.exe
+          g++.exe ./src/*.cpp -O3 -o bin/bf.exe
       - uses: actions/upload-artifact@v4
         with:
           name: bf_windows
