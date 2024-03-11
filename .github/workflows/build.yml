@@ -14,11 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Make binary directory
+        run: mkdir bin
       - name: Build binary
-        run: |
-          mkdir bin
-          g++ ./src/*.cpp -O3 -o bin/bf
-          g++ ./src/*.cpp -O3 -o bin/bfdbg -DBF_DEBUG
+        run: g++ ./src/*.cpp -O3 -o bin/bf
+      - name: Build debug binary
+        run: g++ ./src/*.cpp -O3 -o bin/bfdbg -DBF_DEBUG
       - uses: actions/upload-artifact@v4
         with:
           name: bf-ubuntu
@@ -28,11 +29,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Make binary directory
+        run: mkdir bin
       - name: Build binary
-        run: |
-          mkdir bin
-          g++.exe ./src/*.cpp -O3 -o bin/bf.exe
-          g++.exe ./src/*.cpp -O3 -o bin/bfdbg.exe -DBF_DEBUG
+        run: g++.exe ./src/*.cpp -O3 -o bin/bf.exe
+      - name: Build debug binary
+        run: g++.exe ./src/*.cpp -O3 -o bin/bfdbg.exe -DBF_DEBUG
       - uses: actions/upload-artifact@v4
         with:
           name: bf-windows
