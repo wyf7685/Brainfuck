@@ -1,6 +1,5 @@
 #include "../include/interpreter.h"
 #include "../include/instream.h"
-#include <cstdint>
 #include <iostream>
 #include <map>
 #include <stack>
@@ -30,11 +29,11 @@ std::map<size_t, size_t> get_loop_map(const string &code) {
 Interpreter::Interpreter(string bf_code) {
   code = bf_code;
   loop_map = get_loop_map(code);
+  memory = std::vector<MemoryValue>(MemorySize, 0);
 }
 
 void Interpreter::execute() {
   std::stack<size_t> loop_stack;
-  std::vector<uint16_t> memory(128, 0);
   size_t pointer = 0;
   size_t idx = 0;
 

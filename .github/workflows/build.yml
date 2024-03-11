@@ -20,7 +20,7 @@ jobs:
           g++ ./src/*.cpp -O3 -o bin/bf
       - uses: actions/upload-artifact@v4
         with:
-          name: bf_ubuntu
+          name: bf-ubuntu
           path: bin/
 
   build-windows:
@@ -33,5 +33,5 @@ jobs:
           g++.exe ./src/*.cpp -O3 -o bin/bf.exe
       - uses: actions/upload-artifact@v4
         with:
-          name: bf_windows
+          name: bf-windows
           path: bin/
