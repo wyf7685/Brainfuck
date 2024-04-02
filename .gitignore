@@ -3,3 +3,4 @@ test
 *.exe
 cleaned.*
 bin/
+build/

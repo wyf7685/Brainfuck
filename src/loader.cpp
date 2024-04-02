@@ -64,7 +64,7 @@ string clean_code(const string &code) {
   return result;
 }
 
-string split_lines(string code, int line_size) {
+string split_lines(string code, size_t line_size) {
   string result;
   while (code.size() >= line_size) {
     result += code.substr(0, line_size) + "\n";
