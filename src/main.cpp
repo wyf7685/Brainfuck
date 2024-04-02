@@ -1,11 +1,10 @@
-#include "../include/instream.h"
-#include "../include/interpreter.h"
-#include "../include/loader.h"
-#include "../include/utils.h"
+#include "instream.h"
+#include "interpreter.h"
+#include "loader.h"
+#include "utils.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
-
 
 int main(int argc, char **argv) {
   using namespace bf;

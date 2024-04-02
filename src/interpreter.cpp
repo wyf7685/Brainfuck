@@ -1,10 +1,9 @@
-#include "../include/interpreter.h"
-#include "../include/instream.h"
+#include "interpreter.h"
+#include "instream.h"
 #include <iostream>
 #include <map>
 #include <stack>
 #include <vector>
-
 
 namespace bf {
 

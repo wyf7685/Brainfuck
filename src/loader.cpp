@@ -1,8 +1,8 @@
-#include <string>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <string>
 
-#include "../include/loader.h"
+#include "loader.h"
 
 namespace bf {
 namespace Loader {
@@ -15,12 +15,12 @@ string read_code_file(const string &filename) {
   }
 
   std::string code, line;
+  size_t pos;
   while (std::getline(fin, line)) {
-    size_t pos;
     // 移除注释
-    if ((pos = line.find('#')) != std::string::npos) {
+    if ((pos = line.find('#')) != std::string::npos)
       line = line.substr(0, pos);
-    }
+
     // 代码引用
     while ((pos = line.find('{')) != std::string::npos) {
       size_t endpos = line.find('}', pos);
@@ -34,6 +34,7 @@ string read_code_file(const string &filename) {
       // 插入引用代码
       line = line.substr(0, pos) + refcode + line.substr(endpos + 1);
     }
+
     code += line + "\n";
   }
   fin.close();

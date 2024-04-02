@@ -6,7 +6,6 @@
 #include <map>
 #include <vector>
 
-
 namespace bf {
 
 using MemoryValue = uint16_t;

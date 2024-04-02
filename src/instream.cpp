@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "../include/instream.h"
+#include "instream.h"
 
 namespace bf {
 using std::string;
