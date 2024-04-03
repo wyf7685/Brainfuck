@@ -45,3 +45,6 @@ class Interpreter(object):
 
     def set_instream(self, in_stream: InStream) -> None:
         _bf.interp_set_instream(self._id, in_stream._id)
+
+    def set_memory(self, pos: int, value: int) -> None:
+        _bf.interp_set_memory(self._id, pos, value)

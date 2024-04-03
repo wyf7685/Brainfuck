@@ -11,7 +11,7 @@
 namespace bf {
 
 using MemoryValue = uint16_t;
-size_t const MemorySize = 1024;
+size_t const MemorySize = 64;
 
 class Interpreter {
 public:

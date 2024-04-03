@@ -216,9 +216,29 @@ PYMETHOD(set_instream) {
   uint64_t sid = static_cast<uint64_t>(v1);
   CHECK_INSTREAM(sid);
   uint64_t id = static_cast<uint64_t>(v2);
-  CHECK_INSTREAM(id);
+  CHECK_INTERPRETER(id);
 
   internal::interpreter_map[id].inStream = internal::instream_map[sid];
+  Py_RETURN_NONE;
+}
+
+PYMETHOD(set_memory) {
+  int v1, v2, v3;
+  if (!PyArg_ParseTuple(args, "iii", &v1, &v2, &v3)) {
+    PyErr_SetString(PyExc_TypeError, "Argument error");
+    return NULL;
+  }
+  uint64_t id = static_cast<uint64_t>(v1);
+  CHECK_INTERPRETER(id);
+  size_t pos = static_cast<size_t>(v2);
+  bf::MemoryValue value = static_cast<bf::MemoryValue>(v3);
+
+  auto &memory = internal::interpreter_map[id].memory;
+
+  while (pos >= memory.size())
+    memory.emplace_back(0);
+  memory[pos] = value;
+
   Py_RETURN_NONE;
 }
 
@@ -259,6 +279,7 @@ static PyMethodDef methods[] = {
     {"interp_execute", interpreter::execute, METH_VARARGS},
     {"interp_dump_memory", interpreter::dump_memory, METH_VARARGS},
     {"interp_set_instream", interpreter::set_instream, METH_VARARGS},
+    {"interp_set_memory", interpreter::set_memory, METH_VARARGS},
     {"parse_file", parse_file, METH_VARARGS},
     {"clean_code", clean_code, METH_VARARGS},
     {NULL, NULL, 0, NULL},
