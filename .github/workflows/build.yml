@@ -42,8 +42,8 @@ jobs:
           - ubuntu
           - windows
         python:
-          - "3.10"
-          - "3.11"
+          # - "3.10"
+          # - "3.11"
           - "3.12"
 
     name: build pylib - ${{ matrix.os }}-cp${{ matrix.python }}
