@@ -28,6 +28,8 @@ jobs:
 
       - run: g++ src/*.cpp -O3 -o bin/bfdbg${{ (matrix.os == 'windows' && '.exe') || '' }} -DBF_DEBUG
 
+      - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} bin/
+
       - uses: actions/upload-artifact@v4
         with:
           name: bf-${{ matrix.os }}
@@ -61,8 +63,10 @@ jobs:
           mkdir temp
           mv brainfuck.py temp/
           mv _brainfuck.* temp/
+      
+      - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} temp/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pylib_${{ matrix.os }}-cp${{ matrix.python }}
+          name: pylib-${{ matrix.os }}-cp${{ matrix.python }}
           path: temp/
