@@ -15,13 +15,12 @@ size_t const MemorySize = 1024;
 
 class Interpreter {
 public:
-  InStream instream;
-  string code;
-  std::map<size_t, size_t> loopMap;
+  InStream inStream;
   std::vector<MemoryValue> memory;
 
-  Interpreter(InStream inStream, string bfCode);
-  void execute();
+  Interpreter() : inStream(InStream()){};
+  Interpreter(InStream inStream);
+  void execute(string code);
 };
 
 } // namespace bf

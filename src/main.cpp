@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
         instream.setup_file(arg);
       } else if (input_arg_flag == 1) {
         input_arg_flag = 2;
-        instream.setup_arg(arg);
+        instream.setup_string(arg);
       } else {
         filename = arg;
       }
@@ -75,8 +75,8 @@ int main(int argc, char **argv) {
     cleaned << code;
     cleaned.close();
   } else {
-    Interpreter interpreter(instream, code);
-    auto call = [&interpreter]() { interpreter.execute(); };
+    Interpreter interpreter(instream);
+    auto call = [&]() { interpreter.execute(code); };
     auto cost = utils::timer_with(call);
     if (calc_cost)
       std::cout << "\nCost: " << cost << "s" << std::endl;

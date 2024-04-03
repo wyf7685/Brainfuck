@@ -17,11 +17,12 @@ class InStream {
 
 public:
   InStream() = default;
+  InStream(const InStream &other) = default;
   ~InStream() = default;
 
   bool setup_stdin();
   bool setup_file(const string &filename);
-  bool setup_arg(const string &arg);
+  bool setup_string(const string &str);
   char read();
 };
 

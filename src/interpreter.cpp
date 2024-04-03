@@ -25,14 +25,13 @@ std::map<size_t, size_t> get_loop_map(const string &code) {
   return loop_map;
 }
 
-Interpreter::Interpreter(InStream inStream, string bfCode) {
-  instream = inStream;
-  code = bfCode;
-  loopMap = get_loop_map(code);
-  memory = std::vector<MemoryValue>(MemorySize, 0);
+Interpreter::Interpreter(InStream inStream) {
+  this->inStream = inStream;
+  this->memory = std::vector<MemoryValue>(MemorySize, 0);
 }
 
-void Interpreter::execute() {
+void Interpreter::execute(string code) {
+  std::map<size_t, size_t> loopMap = get_loop_map(code);
   std::stack<size_t> loop_stack;
   size_t pointer = 0;
   size_t idx = 0;
@@ -74,7 +73,7 @@ void Interpreter::execute() {
       std::cout.flush();
       break;
     case ',':
-      memory[pointer] = instream.read();
+      memory[pointer] = inStream.read();
       break;
     case '[':
       if (code[idx + 1] == '-' && code[idx + 2] == ']') {

@@ -26,7 +26,7 @@ bool InStream::setup_file(const string &filename) {
   return true;
 }
 
-bool InStream::setup_arg(const string &arg) {
+bool InStream::setup_string(const string &arg) {
   input = arg;
   input_index = 0;
   type = StreamType::File;
