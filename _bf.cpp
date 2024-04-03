@@ -1,17 +1,12 @@
 #define PY_SSIZE_T_CLEAN
 
-#ifdef _BRAINFUCK_RELEASE
 #include <Python.h>
-#else
-#include "C:\Program Files\Python312\include\Python.h"
-#endif
 
+#include "src/instream.h"
 #include "src/interpreter.h"
 #include "src/loader.h"
 
-static PyObject *_execute_code(const std::string &code) {
-  bf::Interpreter interpreter(bf::Loader::clean_code(code));
-  interpreter.execute();
+static PyObject *_dump_memory(const bf::Interpreter &interpreter) {
   auto &memory = interpreter.memory;
 
   auto it = std::find_if(memory.rbegin(), memory.rend(),
@@ -34,6 +29,13 @@ static PyObject *_execute_code(const std::string &code) {
   return list;
 }
 
+static PyObject *_execute_code(const std::string &code) {
+  bf::InStream instream;
+  bf::Interpreter interpreter(instream, bf::loader::clean_code(code));
+  interpreter.execute();
+  return _dump_memory(interpreter);
+}
+
 static PyObject *execute(PyObject *self, PyObject *args) {
   char *bf_code;
   Py_ssize_t length;
@@ -49,7 +51,7 @@ static PyObject *run_file(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s#", &filename, &length))
     return NULL;
 
-  std::string code = bf::Loader::read_code_file(filename);
+  std::string code = bf::loader::read_code_file(filename);
   return _execute_code(code);
 }
 

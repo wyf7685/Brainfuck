@@ -25,9 +25,10 @@ std::map<size_t, size_t> get_loop_map(const string &code) {
   return loop_map;
 }
 
-Interpreter::Interpreter(string bf_code) {
-  code = bf_code;
-  loop_map = get_loop_map(code);
+Interpreter::Interpreter(InStream inStream, string bfCode) {
+  instream = inStream;
+  code = bfCode;
+  loopMap = get_loop_map(code);
   memory = std::vector<MemoryValue>(MemorySize, 0);
 }
 
@@ -73,7 +74,7 @@ void Interpreter::execute() {
       std::cout.flush();
       break;
     case ',':
-      memory[pointer] = InStream::read();
+      memory[pointer] = instream.read();
       break;
     case '[':
       if (code[idx + 1] == '-' && code[idx + 2] == ']') {
@@ -84,7 +85,7 @@ void Interpreter::execute() {
       if (memory[pointer]) {
         loop_stack.push(idx);
       } else {
-        idx = loop_map.at(idx);
+        idx = loopMap.at(idx);
       }
       break;
     case ']':
@@ -101,7 +102,8 @@ void Interpreter::execute() {
           std::cout << "*";
         std::cout << memory[i] << ", ";
       }
-      std::cout << memory[15] << "]" << std::endl;
+      std::cout << memory[15] << "]\n";
+      std::cout.flush();
     } break;
 #endif // BF_DEBUG
     }

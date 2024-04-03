@@ -1,6 +1,8 @@
 #pragma once
 
 #include "global.h"
+#include "instream.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -13,11 +15,12 @@ size_t const MemorySize = 1024;
 
 class Interpreter {
 public:
+  InStream instream;
   string code;
-  std::map<size_t, size_t> loop_map;
+  std::map<size_t, size_t> loopMap;
   std::vector<MemoryValue> memory;
 
-  Interpreter(string bf_code);
+  Interpreter(InStream inStream, string bfCode);
   void execute();
 };
 

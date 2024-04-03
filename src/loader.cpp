@@ -5,7 +5,7 @@
 #include "loader.h"
 
 namespace bf {
-namespace Loader {
+namespace loader {
 
 string read_code_file(const string &filename) {
   std::ifstream fin(filename.c_str());
@@ -74,6 +74,6 @@ string split_lines(string code, size_t line_size) {
   return result;
 }
 
-} // namespace Loader
+} // namespace loader
 
 } // namespace bf

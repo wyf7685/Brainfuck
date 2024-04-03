@@ -1,5 +1,7 @@
 import platform
-from setuptools import setup, Extension
+import sys
+
+from setuptools import Extension, setup
 
 if platform.system() == "Windows":
     cxx_std_arg = "/std:c++20"
@@ -19,6 +21,7 @@ extension = Extension(
     extra_compile_args=[cxx_std_arg],
 )
 
+sys.argv[1:] = ["build_ext", "--inplace"]
 setup(
     name="brainfuck",
     version="1.0",

@@ -21,6 +21,8 @@ int main(int argc, char **argv) {
   int input_arg_flag = 0;
   bool calc_cost = false;
 
+  InStream instream;
+
   for (const string &arg : args) {
     if (arg[0] == '-') {
       switch (arg[1]) {
@@ -48,10 +50,10 @@ int main(int argc, char **argv) {
         clean_file_flag = 2;
       } else if (infile_flag == 1) {
         infile_flag = 2;
-        InStream::setup_file(arg);
+        instream.setup_file(arg);
       } else if (input_arg_flag == 1) {
         input_arg_flag = 2;
-        InStream::setup_arg(arg);
+        instream.setup_arg(arg);
       } else {
         filename = arg;
       }
@@ -62,18 +64,18 @@ int main(int argc, char **argv) {
     std::cout << "Please input Brainfuck file path!" << std::endl;
     exit(1);
   }
-  string code = Loader::read_code_file(filename);
+  string code = loader::read_code_file(filename);
   if (do_clean)
-    code = Loader::clean_code(code);
+    code = loader::clean_code(code);
 
   if (clean_file_flag) {
     std::ofstream cleaned(clean_filename);
     if (do_clean)
-      code = Loader::split_lines(code);
+      code = loader::split_lines(code);
     cleaned << code;
     cleaned.close();
   } else {
-    Interpreter interpreter(code);
+    Interpreter interpreter(instream, code);
     auto call = [&interpreter]() { interpreter.execute(); };
     auto cost = utils::timer_with(call);
     if (calc_cost)

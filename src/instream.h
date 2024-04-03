@@ -4,11 +4,25 @@
 #include <string>
 
 namespace bf {
-namespace InStream {
 
-char read();
-void setup_file(const string &filename);
-void setup_arg(const string &arg);
+enum class StreamType {
+  Stdin = 0,
+  File,
+};
 
-} // namespace InStream
+class InStream {
+  StreamType type = StreamType::Stdin;
+  std::string input;
+  size_t input_index = 0;
+
+public:
+  InStream() = default;
+  ~InStream() = default;
+
+  bool setup_stdin();
+  bool setup_file(const string &filename);
+  bool setup_arg(const string &arg);
+  char read();
+};
+
 } // namespace bf
