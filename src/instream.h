@@ -20,9 +20,9 @@ public:
   InStream(const InStream &other) = default;
   ~InStream() = default;
 
-  bool setup_stdin();
-  bool setup_file(const string &filename);
-  bool setup_string(const string &str);
+  void setup_stdin();
+  void setup_file(const string &filename);
+  void setup_string(const string &str);
   char read();
 };
 

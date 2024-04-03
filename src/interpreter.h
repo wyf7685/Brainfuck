@@ -11,7 +11,7 @@
 namespace bf {
 
 using MemoryValue = uint16_t;
-size_t const MemorySize = 64;
+static const size_t MemorySize = 64;
 
 class Interpreter {
 public:
@@ -20,7 +20,7 @@ public:
 
   Interpreter() : inStream(InStream()){};
   Interpreter(InStream inStream);
-  void execute(string code);
+  void execute(const string &code);
 };
 
 } // namespace bf

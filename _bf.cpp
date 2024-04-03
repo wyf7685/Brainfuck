@@ -104,9 +104,12 @@ PYMETHOD(set_file) {
   uint64_t id = static_cast<uint64_t>(value);
   CHECK_INSTREAM(id);
 
-  if (internal::instream_map[id].setup_file(filename))
-    Py_RETURN_TRUE;
-  Py_RETURN_FALSE;
+  try {
+    internal::instream_map[id].setup_file(filename);
+  } catch (bf::Exception &e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+  }
+  Py_RETURN_NONE;
 }
 
 PYMETHOD(set_string) {
@@ -171,7 +174,13 @@ PYMETHOD(execute) {
   uint64_t id = static_cast<uint64_t>(value);
   CHECK_INTERPRETER(id);
 
-  internal::interpreter_map[id].execute(code);
+  try {
+    internal::interpreter_map[id].execute(code);
+  } catch (bf::Exception &e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return NULL;
+  }
+
   Py_RETURN_NONE;
 }
 
@@ -252,8 +261,30 @@ PYMETHOD(parse_file) {
     return NULL;
   }
 
-  std::string code = bf::loader::read_code_file(filename);
-  return PyUnicode_FromString(code.c_str());
+  try {
+    std::string code = bf::loader::parse_file(filename);
+    return PyUnicode_FromString(code.c_str());
+  } catch (bf::Exception &e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return NULL;
+  }
+}
+
+PYMETHOD(parse_string) {
+  char *str;
+  Py_ssize_t length;
+  if (!PyArg_ParseTuple(args, "s#", &str, &length)) {
+    PyErr_SetString(PyExc_TypeError, "Argument error");
+    return NULL;
+  }
+
+  try {
+    std::string code = bf::loader::parse_string(str);
+    return PyUnicode_FromString(code.c_str());
+  } catch (bf::Exception &e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return NULL;
+  }
 }
 
 PYMETHOD(clean_code) {
@@ -281,6 +312,7 @@ static PyMethodDef methods[] = {
     {"interp_set_instream", interpreter::set_instream, METH_VARARGS},
     {"interp_set_memory", interpreter::set_memory, METH_VARARGS},
     {"parse_file", parse_file, METH_VARARGS},
+    {"parse_string", parse_string, METH_VARARGS},
     {"clean_code", clean_code, METH_VARARGS},
     {NULL, NULL, 0, NULL},
 };

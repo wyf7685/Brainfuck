@@ -6,16 +6,13 @@
 
 namespace bf {
 
-bool InStream::setup_stdin() {
-  type = StreamType::Stdin;
-  return true;
-}
+void InStream::setup_stdin() { type = StreamType::Stdin; }
 
-bool InStream::setup_file(const string &filename) {
+void InStream::setup_file(const string &filename) {
   std::ifstream file(filename);
   if (!file.good()) {
-    std::cout << "Error: Cannot open file '" << filename << "'" << std::endl;
-    return false;
+    string msg = "Error: Cannot open file '" + filename + "'";
+    throw Exception(msg.c_str());
   }
   string line;
   while (std::getline(file, line)) {
@@ -23,14 +20,12 @@ bool InStream::setup_file(const string &filename) {
   }
   input_index = 0;
   type = StreamType::File;
-  return true;
 }
 
-bool InStream::setup_string(const string &arg) {
+void InStream::setup_string(const string &arg) {
   input = arg;
   input_index = 0;
   type = StreamType::File;
-  return true;
 }
 
 char InStream::read() {

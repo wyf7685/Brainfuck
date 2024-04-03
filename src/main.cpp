@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     std::cout << "Please input Brainfuck file path!" << std::endl;
     exit(1);
   }
-  string code = loader::read_code_file(filename);
+  string code = loader::parse_file(filename);
   if (do_clean)
     code = loader::clean_code(code);
 

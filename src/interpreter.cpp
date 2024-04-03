@@ -19,8 +19,7 @@ std::map<size_t, size_t> get_loop_map(const string &code) {
     }
   }
   if (!loop_stack.empty()) {
-    std::cout << "Error: Loop tag mismatch\n";
-    exit(2);
+    throw Exception("Error: Loop tag mismatch");
   }
   return loop_map;
 }
@@ -30,11 +29,11 @@ Interpreter::Interpreter(InStream inStream) {
   this->memory = std::vector<MemoryValue>(MemorySize, 0);
 }
 
-void Interpreter::execute(string code) {
-  std::map<size_t, size_t> loopMap = get_loop_map(code);
-  std::stack<size_t> loop_stack;
-  size_t pointer = 0;
+void Interpreter::execute(const string &code) {
   size_t idx = 0;
+  size_t pointer = 0;
+  std::stack<size_t> loop_stack;
+  std::map<size_t, size_t> loop_map = get_loop_map(code);
 
   while (idx < code.size()) {
     switch (code[idx]) {
@@ -59,14 +58,14 @@ void Interpreter::execute(string code) {
       while (code[idx + i] == '+')
         i++;
       idx += i - 1;
-      memory[pointer] += i;
+      memory[pointer] += static_cast<MemoryValue>(i);
     } break;
     case '-': {
       size_t i = 0;
       while (code[idx + i] == '-')
         i++;
       idx += i - 1;
-      memory[pointer] -= i;
+      memory[pointer] -= static_cast<MemoryValue>(i);
     } break;
     case '.':
       std::cout << static_cast<char>(memory[pointer]);
@@ -84,7 +83,7 @@ void Interpreter::execute(string code) {
       if (memory[pointer]) {
         loop_stack.push(idx);
       } else {
-        idx = loopMap.at(idx);
+        idx = loop_map.at(idx);
       }
       break;
     case ']':
@@ -105,7 +104,7 @@ void Interpreter::execute(string code) {
       std::cout.flush();
     } break;
 #endif // BF_DEBUG
-    }
+    } // switch
     idx++;
   }
 }
