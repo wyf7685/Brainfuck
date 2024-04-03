@@ -10,32 +10,59 @@ permissions:
   contents: read
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-latest
+  build-binary:
+    strategy:
+      matrix:
+        os:
+          - ubuntu
+          - windows
+    
+    name: build - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Make binary directory
-        run: mkdir bin
-      - name: Build binary
-        run: g++ ./src/*.cpp -O3 -o bin/bf
-      - name: Build debug binary
-        run: g++ ./src/*.cpp -O3 -o bin/bfdbg -DBF_DEBUG
+
+      - run: mkdir bin
+
+      - run: g++ src/*.cpp -O3 -o bin/bf${{ (matrix.os == 'windows' && '.exe') || '' }}
+
+      - run: g++ src/*.cpp -O3 -o bin/bfdbg${{ (matrix.os == 'windows' && '.exe') || '' }} -DBF_DEBUG
+
       - uses: actions/upload-artifact@v4
         with:
-          name: bf-ubuntu
+          name: bf-${{ matrix.os }}
           path: bin/
 
-  build-windows:
-    runs-on: windows-latest
+  build-pylib:
+    strategy:
+      matrix:
+        os:
+          - ubuntu
+          - windows
+        python:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
+    name: build pylib - ${{ matrix.os }}-cp${{ matrix.python }}
+    runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Make binary directory
-        run: mkdir bin
-      - name: Build binary
-        run: g++.exe ./src/*.cpp -O3 -o bin/bf.exe
-      - name: Build debug binary
-        run: g++.exe ./src/*.cpp -O3 -o bin/bfdbg.exe -DBF_DEBUG
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - run: python -m pip install -U setuptools
+
+      - run: python setup.py
+
+      - run: |
+          mkdir temp
+          mv brainfuck.py temp/
+          mv _brainfuck.* temp/
+
       - uses: actions/upload-artifact@v4
         with:
-          name: bf-windows
-          path: bin/
+          name: pylib_${{ matrix.os }}-cp${{ matrix.python }}
+          path: temp/
