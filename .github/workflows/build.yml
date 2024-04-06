@@ -61,8 +61,7 @@ jobs:
 
       - run: |
           mkdir temp
-          mv brainfuck.py temp/
-          mv _brainfuck.* temp/
+          mv brainfuck.* temp/
       
       - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} temp/
 

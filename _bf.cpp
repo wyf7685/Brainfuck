@@ -7,175 +7,157 @@
 #include "src/loader.h"
 #include <sstream>
 
-namespace internal {
-using namespace bf;
-
-// InStream
-std::map<uint64_t, InStream> instream_map;
-uint64_t instream_id = 0;
-
-static uint64_t create_instream() {
-  InStream instream;
-  instream_map[instream_id++] = instream;
-  return instream_id - 1;
-}
-
-static void destroy_instream(uint64_t id) {
-  if (instream_map.find(id) != instream_map.end())
-    instream_map.erase(id);
-}
-
-// Interpreter
-std::map<uint64_t, Interpreter> interpreter_map;
-uint64_t interpreter_id = 0;
-
-static uint64_t create_interpreter(const InStream &instream) {
-  interpreter_map[interpreter_id++] = Interpreter(instream);
-  return interpreter_id - 1;
-}
-
-static void destroy_interpreter(uint64_t id) {
-  if (interpreter_map.find(id) != interpreter_map.end())
-    interpreter_map.erase(id);
-}
-
-} // namespace internal
-
-namespace pymethod {
-
-#define PYMETHOD(identifier)                                                   \
-  static PyObject *identifier(PyObject *self, PyObject *args)
-#define CHECK_ID(where, id)                                                    \
-  if (internal::where.find(id) == internal::where.end()) {                     \
-    std::stringstream ss;                                                      \
-    ss << "ID " << id << " does not exist";                                    \
-    PyErr_SetString(PyExc_ValueError, ss.str().c_str());                       \
-    return NULL;                                                               \
-  }
-#define CHECK_INSTREAM(id) CHECK_ID(instream_map, id)
-#define CHECK_INTERPRETER(id) CHECK_ID(interpreter_map, id)
-
+namespace brainfuck {
 namespace instream {
 
-PYMETHOD(create) {
-  uint64_t id = internal::create_instream();
-  PyObject *py_int = PyLong_FromUnsignedLongLong(id);
-  if (!py_int) {
-    internal::destroy_instream(id);
-    return NULL;
+enum class StreamType {
+  Stdin = 0,
+  File,
+  String,
+};
+
+typedef struct {
+  PyObject_HEAD;
+  StreamType mode;
+  bf::InStream *instream;
+} InStream;
+
+static PyObject *InStream_new(PyTypeObject *type, PyObject *args,
+                              PyObject *kwds) {
+  InStream *self = (InStream *)type->tp_alloc(type, 0);
+  if (self != NULL) {
+    self->instream = new bf::InStream();
+    self->mode = StreamType::Stdin;
   }
-  return py_int;
+  return (PyObject *)self;
 }
 
-PYMETHOD(destroy) {
-  int value;
-  if (!PyArg_ParseTuple(args, "i", &value)) {
-    PyErr_SetString(PyExc_TypeError, "Argument must be an integer");
-    return NULL;
-  }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INSTREAM(id);
+static void InStream_dealloc(InStream *self) {
+  delete self->instream;
+  Py_TYPE(self)->tp_free((PyObject *)self);
+}
 
-  internal::destroy_instream(id);
+static PyObject *set_stdin(InStream *self, PyObject *args) {
+  self->instream->setup_stdin();
+  self->mode = StreamType::Stdin;
   Py_RETURN_NONE;
 }
 
-PYMETHOD(set_stdin) {
-  int value;
-  if (!PyArg_ParseTuple(args, "i", &value)) {
-    PyErr_SetString(PyExc_TypeError, "Argument must be an integer");
-    return NULL;
-  }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INSTREAM(id);
-
-  internal::instream_map[id].setup_stdin();
-  Py_RETURN_NONE;
-}
-
-PYMETHOD(set_file) {
-  int value;
+static PyObject *set_file(InStream *self, PyObject *args) {
   char *filename;
   Py_ssize_t length;
-  if (!PyArg_ParseTuple(args, "is#", &value, &filename, &length)) {
+  if (!PyArg_ParseTuple(args, "s#", &filename, &length)) {
     PyErr_SetString(PyExc_TypeError, "Argument error");
     return NULL;
   }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INSTREAM(id);
 
-  try {
-    internal::instream_map[id].setup_file(filename);
-  } catch (bf::Exception &e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-  }
+  self->instream->setup_file(filename);
+  self->mode = StreamType::File;
   Py_RETURN_NONE;
 }
 
-PYMETHOD(set_string) {
-  int value;
+static PyObject *set_string(InStream *self, PyObject *args) {
   char *str;
   Py_ssize_t length;
-  if (!PyArg_ParseTuple(args, "is#", &value, &str, &length)) {
+  if (!PyArg_ParseTuple(args, "s#", &str, &length)) {
     PyErr_SetString(PyExc_TypeError, "Argument error");
     return NULL;
   }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INSTREAM(id);
 
-  internal::instream_map[id].setup_string(str);
+  self->instream->setup_string(str);
+  self->mode = StreamType::String;
   Py_RETURN_NONE;
 }
+
+static PyObject *repr(InStream *self) {
+  std::stringstream ss;
+  ss << "<InStream mode=";
+  switch (self->mode) {
+  case StreamType::Stdin:
+    ss << "stdin";
+    break;
+  case StreamType::File:
+    ss << "file";
+    break;
+  case StreamType::String:
+    ss << "string";
+    break;
+  }
+  ss << ">";
+  return PyUnicode_FromString(ss.str().c_str());
+}
+
+static PyMemberDef members[] = {
+    {"mode", Py_T_INT, offsetof(InStream, mode), 0},
+    {NULL} /* Sentinel */
+};
+
+static PyMethodDef methods[] = {
+    {"set_stdin", (PyCFunction)set_stdin, METH_VARARGS},
+    {"set_file", (PyCFunction)set_file, METH_VARARGS},
+    {"set_string", (PyCFunction)set_string, METH_VARARGS},
+    {NULL} /* Sentinel */
+};
+
+static PyTypeObject InStreamType = {
+    .ob_base = {{{1}, (0)}, (0)},
+    .tp_name = "brainfuck.InStream",
+    .tp_basicsize = sizeof(InStream),
+    .tp_itemsize = 0,
+    .tp_dealloc = (destructor)InStream_dealloc,
+    .tp_repr = (reprfunc)repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_methods = methods,
+    .tp_members = members,
+    .tp_new = InStream_new,
+};
 
 } // namespace instream
 
 namespace interpreter {
 
-PYMETHOD(create) {
-  int value;
-  if (!PyArg_ParseTuple(args, "i", &value)) {
+typedef struct {
+  PyObject_HEAD;
+  instream::InStream *instream;
+  bf::Interpreter *interpreter;
+} Interpreter;
+
+static PyObject *Interpreter_new(PyTypeObject *type, PyObject *args,
+                                 PyObject *kwds) {
+  PyObject *inStream;
+  PyObject *instream_type = (PyObject *)(&instream::InStreamType);
+
+  if (!PyArg_ParseTuple(args, "O", &inStream) ||
+      !PyObject_IsInstance(inStream, instream_type)) {
     PyErr_SetString(PyExc_TypeError, "Argument error");
     return NULL;
   }
-  uint64_t sid = static_cast<uint64_t>(value);
-  CHECK_INSTREAM(sid);
 
-  bf::InStream &inStream = internal::instream_map[sid];
-  uint64_t id = internal::create_interpreter(inStream);
-  PyObject *py_int = PyLong_FromUnsignedLongLong(id);
-  if (!py_int) {
-    internal::destroy_instream(id);
-    return NULL;
+  Interpreter *self = (Interpreter *)type->tp_alloc(type, 0);
+  if (self != NULL) {
+    Py_INCREF(inStream);
+    self->instream = (instream::InStream *)inStream;
+    self->interpreter = new bf::Interpreter(*self->instream->instream);
   }
-  return py_int;
+  return (PyObject *)self;
 }
 
-PYMETHOD(destroy) {
-  int value;
-  if (!PyArg_ParseTuple(args, "i", &value)) {
-    PyErr_SetString(PyExc_TypeError, "Argument must be an integer");
-    return NULL;
-  }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INTERPRETER(id);
-
-  internal::destroy_interpreter(id);
-  Py_RETURN_NONE;
+static void Interpreter_dealloc(Interpreter *self) {
+  delete self->interpreter;
+  Py_DECREF(self->instream);
+  Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-PYMETHOD(execute) {
-  int value;
+static PyObject *execute(Interpreter *self, PyObject *args) {
   char *code;
   Py_ssize_t length;
-  if (!PyArg_ParseTuple(args, "is#", &value, &code, &length)) {
+  if (!PyArg_ParseTuple(args, "s#", &code, &length)) {
     PyErr_SetString(PyExc_TypeError, "Argument error");
     return NULL;
   }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INTERPRETER(id);
 
   try {
-    internal::interpreter_map[id].execute(code);
+    self->interpreter->execute(code);
   } catch (bf::Exception &e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
     return NULL;
@@ -184,17 +166,8 @@ PYMETHOD(execute) {
   Py_RETURN_NONE;
 }
 
-PYMETHOD(dump_memory) {
-  int value;
-  if (!PyArg_ParseTuple(args, "i", &value)) {
-    PyErr_SetString(PyExc_TypeError, "Argument must be an integer");
-    return NULL;
-  }
-  uint64_t id = static_cast<uint64_t>(value);
-  CHECK_INTERPRETER(id);
-
-  bf::Interpreter &interpreter = internal::interpreter_map[id];
-  auto &memory = interpreter.memory;
+static PyObject *dump_memory(Interpreter *self, PyObject *args) {
+  auto &memory = self->interpreter->memory;
 
   auto it = std::find_if(memory.rbegin(), memory.rend(),
                          [](const bf::MemoryValue &v) { return !!v; });
@@ -216,44 +189,75 @@ PYMETHOD(dump_memory) {
   return list;
 }
 
-PYMETHOD(set_instream) {
+static PyObject *set_instream(Interpreter *self, PyObject *args) {
+  PyObject *inStream;
+  PyObject *instream_type = (PyObject *)(&instream::InStreamType);
+
+  if (!PyArg_ParseTuple(args, "O", &inStream) ||
+      !PyObject_IsInstance(inStream, instream_type)) {
+    PyErr_SetString(PyExc_TypeError, "Argument error");
+    return NULL;
+  }
+
+  Py_DECREF(self->instream);
+  Py_INCREF(inStream);
+  self->instream = (instream::InStream *)inStream;
+  self->interpreter->inStream = *self->instream->instream;
+  Py_RETURN_NONE;
+}
+
+static PyObject *set_memory(Interpreter *self, PyObject *args) {
   int v1, v2;
   if (!PyArg_ParseTuple(args, "ii", &v1, &v2)) {
     PyErr_SetString(PyExc_TypeError, "Argument error");
     return NULL;
   }
-  uint64_t sid = static_cast<uint64_t>(v1);
-  CHECK_INSTREAM(sid);
-  uint64_t id = static_cast<uint64_t>(v2);
-  CHECK_INTERPRETER(id);
-
-  internal::interpreter_map[id].inStream = internal::instream_map[sid];
-  Py_RETURN_NONE;
-}
-
-PYMETHOD(set_memory) {
-  int v1, v2, v3;
-  if (!PyArg_ParseTuple(args, "iii", &v1, &v2, &v3)) {
-    PyErr_SetString(PyExc_TypeError, "Argument error");
-    return NULL;
-  }
-  uint64_t id = static_cast<uint64_t>(v1);
-  CHECK_INTERPRETER(id);
-  size_t pos = static_cast<size_t>(v2);
-  bf::MemoryValue value = static_cast<bf::MemoryValue>(v3);
-
-  auto &memory = internal::interpreter_map[id].memory;
+  auto &memory = self->interpreter->memory;
+  size_t pos = static_cast<size_t>(v1);
+  bf::MemoryValue value = static_cast<bf::MemoryValue>(v2);
 
   while (pos >= memory.size())
     memory.emplace_back(0);
   memory[pos] = value;
-
   Py_RETURN_NONE;
 }
 
+static PyObject *repr(Interpreter *self) {
+  std::stringstream ss;
+  ss << "<Interpreter stream="
+     << PyUnicode_AsUTF8(instream::repr(self->instream)) << ">";
+  return PyUnicode_FromString(ss.str().c_str());
+}
+
+static PyMemberDef members[] = {
+    {"stream", Py_T_OBJECT_EX, offsetof(Interpreter, instream), 0},
+    {NULL} /* Sentinel */
+};
+
+static PyMethodDef methods[] = {
+    {"execute", (PyCFunction)execute, METH_VARARGS},
+    {"dump_memory", (PyCFunction)dump_memory, METH_VARARGS},
+    {"set_instream", (PyCFunction)set_instream, METH_VARARGS},
+    {"set_memory", (PyCFunction)set_memory, METH_VARARGS},
+    {NULL} /* Sentinel */
+};
+
+static PyTypeObject InterpreterType = {
+    .ob_base = {{{1}, (0)}, (0)},
+    .tp_name = "brainfuck.Interpreter",
+    .tp_basicsize = sizeof(Interpreter),
+    .tp_itemsize = 0,
+    .tp_dealloc = (destructor)Interpreter_dealloc,
+    .tp_repr = (reprfunc)repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_methods = methods,
+    .tp_members = members,
+    .tp_new = Interpreter_new,
+};
+
 } // namespace interpreter
 
-PYMETHOD(parse_file) {
+static PyObject *parse_file(PyObject *self, PyObject *args) {
   char *filename;
   Py_ssize_t length;
   if (!PyArg_ParseTuple(args, "s#", &filename, &length)) {
@@ -262,7 +266,7 @@ PYMETHOD(parse_file) {
   }
 
   try {
-    std::string code = bf::loader::parse_file(filename);
+    std::string code = bf::loader::clean_code(bf::loader::parse_file(filename));
     return PyUnicode_FromString(code.c_str());
   } catch (bf::Exception &e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -270,7 +274,7 @@ PYMETHOD(parse_file) {
   }
 }
 
-PYMETHOD(parse_string) {
+static PyObject *parse_string(PyObject *self, PyObject *args) {
   char *str;
   Py_ssize_t length;
   if (!PyArg_ParseTuple(args, "s#", &str, &length)) {
@@ -279,7 +283,7 @@ PYMETHOD(parse_string) {
   }
 
   try {
-    std::string code = bf::loader::parse_string(str);
+    std::string code = bf::loader::clean_code(bf::loader::parse_string(str));
     return PyUnicode_FromString(code.c_str());
   } catch (bf::Exception &e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -287,7 +291,7 @@ PYMETHOD(parse_string) {
   }
 }
 
-PYMETHOD(clean_code) {
+static PyObject *clean_code(PyObject *self, PyObject *args) {
   char *code;
   Py_ssize_t length;
   if (!PyArg_ParseTuple(args, "s#", &code, &length)) {
@@ -299,31 +303,38 @@ PYMETHOD(clean_code) {
   return PyUnicode_FromString(cleaned.c_str());
 }
 
-static PyMethodDef methods[] = {
-    {"stream_create", instream::create, METH_VARARGS},
-    {"stream_destroy", instream::destroy, METH_VARARGS},
-    {"stream_set_stdin", instream::set_stdin, METH_VARARGS},
-    {"stream_set_file", instream::set_file, METH_VARARGS},
-    {"stream_set_string", instream::set_string, METH_VARARGS},
-    {"interp_create", interpreter::create, METH_VARARGS},
-    {"interp_destroy", interpreter::destroy, METH_VARARGS},
-    {"interp_execute", interpreter::execute, METH_VARARGS},
-    {"interp_dump_memory", interpreter::dump_memory, METH_VARARGS},
-    {"interp_set_instream", interpreter::set_instream, METH_VARARGS},
-    {"interp_set_memory", interpreter::set_memory, METH_VARARGS},
+static PyMethodDef ModuleMethods[] = {
     {"parse_file", parse_file, METH_VARARGS},
     {"parse_string", parse_string, METH_VARARGS},
     {"clean_code", clean_code, METH_VARARGS},
     {NULL, NULL, 0, NULL},
 };
 
-} // namespace pymethod
-
-static struct PyModuleDef bf_module = {
+static struct PyModuleDef Module = {
     .m_base = PyModuleDef_HEAD_INIT,
     .m_name = "brainfuck",
     .m_doc = "Brainfuck interpreter by wyf7685",
-    .m_methods = pymethod::methods,
+    .m_methods = ModuleMethods,
 };
 
-PyMODINIT_FUNC PyInit__brainfuck(void) { return PyModule_Create(&bf_module); }
+} // namespace brainfuck
+
+PyMODINIT_FUNC PyInit_brainfuck(void) {
+  using namespace brainfuck;
+
+  auto &InStreamType = instream::InStreamType;
+  auto &InterpreterType = interpreter::InterpreterType;
+
+  if (PyType_Ready(&InStreamType) < 0 || PyType_Ready(&InterpreterType) < 0)
+    return NULL;
+
+  PyObject *module = PyModule_Create(&Module);
+  if (module) {
+    Py_INCREF(&InStreamType);
+    PyModule_AddObject(module, "InStream", (PyObject *)&InStreamType);
+    Py_INCREF(&InterpreterType);
+    PyModule_AddObject(module, "Interpreter", (PyObject *)&InterpreterType);
+  }
+
+  return module;
+}

@@ -9,7 +9,7 @@ else:
     cxx_std_arg = "-std=c++20"
 
 extension = Extension(
-    "_brainfuck",
+    "brainfuck",
     sources=[
         "_bf.cpp",
         "src/interpreter.cpp",
