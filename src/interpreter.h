@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace bf {
@@ -15,11 +16,11 @@ static const size_t MemorySize = 64;
 
 class Interpreter {
 public:
-  InStream inStream;
+  std::shared_ptr<InStream> inStream;
   std::vector<MemoryValue> memory;
 
-  Interpreter() : inStream(InStream()){};
-  Interpreter(InStream inStream);
+  Interpreter() : inStream(std::make_shared<InStream>()){};
+  Interpreter(std::shared_ptr<InStream> inStream);
   void execute(const string &code);
 };
 

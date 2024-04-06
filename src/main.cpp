@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 int main(int argc, char **argv) {
@@ -21,7 +22,7 @@ int main(int argc, char **argv) {
   int input_arg_flag = 0;
   bool calc_cost = false;
 
-  InStream instream;
+  auto instream = std::make_shared<InStream>();
 
   for (const string &arg : args) {
     if (arg[0] == '-') {
@@ -50,10 +51,10 @@ int main(int argc, char **argv) {
         clean_file_flag = 2;
       } else if (infile_flag == 1) {
         infile_flag = 2;
-        instream.setup_file(arg);
+        instream->setup_file(arg);
       } else if (input_arg_flag == 1) {
         input_arg_flag = 2;
-        instream.setup_string(arg);
+        instream->setup_string(arg);
       } else {
         filename = arg;
       }

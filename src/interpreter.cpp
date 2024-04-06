@@ -2,6 +2,7 @@
 #include "instream.h"
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stack>
 #include <vector>
 
@@ -24,7 +25,7 @@ std::map<size_t, size_t> get_loop_map(const string &code) {
   return loop_map;
 }
 
-Interpreter::Interpreter(InStream inStream) {
+Interpreter::Interpreter(std::shared_ptr<InStream> inStream) {
   this->inStream = inStream;
   this->memory = std::vector<MemoryValue>(MemorySize, 0);
 }
@@ -72,7 +73,7 @@ void Interpreter::execute(const string &code) {
       std::cout.flush();
       break;
     case ',':
-      memory[pointer] = inStream.read();
+      memory[pointer] = inStream->read();
       break;
     case '[':
       if (code[idx + 1] == '-' && code[idx + 2] == ']') {
