@@ -1,10 +1,10 @@
 #define PY_SSIZE_T_CLEAN
-
 #include <Python.h>
 
 #include "src/instream.h"
 #include "src/interpreter.h"
 #include "src/loader.h"
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -165,7 +165,7 @@ namespace interpreter {
 
 typedef struct {
   PyObject_HEAD;
-  instream::InStream *instream;
+  instream::InStream *inStreamObj;
   std::unique_ptr<bf::Interpreter> interpreter;
 } Interpreter;
 
@@ -183,15 +183,15 @@ static PyObject *Interpreter_new(PyTypeObject *type, PyObject *args,
   Interpreter *self = (Interpreter *)type->tp_alloc(type, 0);
   if (self != nullptr) {
     Py_INCREF(inStream);
-    self->instream = (instream::InStream *)inStream;
+    self->inStreamObj = (instream::InStream *)inStream;
     self->interpreter =
-        std::make_unique<bf::Interpreter>(self->instream->instream);
+        std::make_unique<bf::Interpreter>(self->inStreamObj->instream);
   }
   return (PyObject *)self;
 }
 
 static void Interpreter_dealloc(Interpreter *self) {
-  Py_DECREF(self->instream);
+  Py_DECREF(self->inStreamObj);
   Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -246,10 +246,10 @@ static PyObject *set_instream(Interpreter *self, PyObject *args) {
     return nullptr;
   }
 
-  Py_DECREF(self->instream);
+  Py_DECREF(self->inStreamObj);
   Py_INCREF(inStream);
-  self->instream = (instream::InStream *)inStream;
-  self->interpreter->inStream = self->instream->instream;
+  self->inStreamObj = (instream::InStream *)inStream;
+  self->interpreter->inStream = self->inStreamObj->instream;
   Py_RETURN_NONE;
 }
 
@@ -272,14 +272,19 @@ static PyObject *set_memory(Interpreter *self, PyObject *args) {
 static PyObject *repr(Interpreter *self) {
   std::stringstream ss;
   ss << "<Interpreter stream="
-     << PyUnicode_AsUTF8(instream::repr(self->instream)) << ">";
+     << PyUnicode_AsUTF8(instream::repr(self->inStreamObj)) << ">";
   return PyUnicode_FromString(ss.str().c_str());
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winvalid-offsetof"
+
 static PyMemberDef members[] = {
-    {"stream", Py_T_OBJECT_EX, offsetof(Interpreter, instream), 0},
+    {"stream", Py_T_OBJECT_EX, offsetof(Interpreter, inStreamObj), 0},
     {nullptr} /* Sentinel */
 };
+
+#pragma clang diagnostic pop
 
 static PyMethodDef methods[] = {
     {"execute", (PyCFunction)execute, METH_VARARGS},
