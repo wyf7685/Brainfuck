@@ -24,16 +24,14 @@ jobs:
 
       - run: cmake .
 
-      - run: make bf
-
-      - run: make bfdbg
+      - run: ${{ (matrix.os == 'windows' && 'msbuild .\Brainfuck.sln /p:Configuration=Release') || 'make bf bfdbg' }}
 
       - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} bin/
 
       - uses: actions/upload-artifact@v4
         with:
           name: bf-${{ matrix.os }}
-          path: bin/
+          path: bin/${{ (matrix.os == 'windows' && 'Release') || '' }}
 
   build-pylib:
     strategy:
