@@ -24,10 +24,10 @@ jobs:
 
       - run: cmake .
 
-      - run: cmake --build . -- /p:Configuration=Release
+      - run: cmake --build . -t bf -t bfdbg -- /p:Configuration=Release
         if: ${{ matrix.os == 'windows' }}
 
-      - run: cmake --build .
+      - run: make bf bfdbg
         if: ${{ matrix.os == 'ubuntu' }}
 
       - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} bin/
