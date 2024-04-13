@@ -4,6 +4,7 @@
 #include "src/instream.h"
 #include "src/interpreter.h"
 #include "src/loader.h"
+
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -53,8 +54,7 @@ static PyObject *clean_code(PyObject *self, PyObject *args) {
     return nullptr;
   }
 
-  std::string cleaned = bf::loader::clean_code(code);
-  return PyUnicode_FromString(cleaned.c_str());
+  return PyUnicode_FromString(bf::loader::clean_code(code).c_str());
 }
 
 namespace instream {
@@ -74,7 +74,7 @@ typedef struct {
 static PyObject *InStream_new(PyTypeObject *type, PyObject *args,
                               PyObject *kwds) {
   InStream *self = (InStream *)type->tp_alloc(type, 0);
-  if (self != nullptr) {
+  if (self) {
     self->instream = std::make_shared<bf::InStream>();
     self->mode = StreamType::Stdin;
   }
@@ -117,30 +117,33 @@ static PyObject *set_string(InStream *self, PyObject *args) {
   Py_RETURN_NONE;
 }
 
-static PyObject *repr(InStream *self) {
-  std::stringstream ss;
-  ss << "<InStream mode=";
+static std::string _repr(InStream *self) {
+  std::string str = "<InStream mode=";
   switch (self->mode) {
   case StreamType::Stdin:
-    ss << "stdin";
+    str += "stdin";
     break;
   case StreamType::File:
-    ss << "file";
+    str += "file";
     break;
   case StreamType::String:
-    ss << "string";
+    str += "string";
     break;
   }
-  ss << ">";
-  return PyUnicode_FromString(ss.str().c_str());
+  str += ">";
+  return str;
+}
+
+static PyObject *repr(InStream *self) {
+  return PyUnicode_FromString(_repr(self).c_str());
 }
 
 static PyMemberDef members[] = {
-    {"mode", Py_T_INT, offsetof(InStream, mode), 0}, {nullptr} /* Sentinel */
+    {"mode", Py_T_INT, offsetof(InStream, mode), 0}, {nullptr}, /* Sentinel */
 };
 
 static PyMethodDef methods[] = {
-    {"set_stdin", (PyCFunction)set_stdin, METH_VARARGS},
+    {"set_stdin", (PyCFunction)set_stdin, METH_NOARGS},
     {"set_file", (PyCFunction)set_file, METH_VARARGS},
     {"set_string", (PyCFunction)set_string, METH_VARARGS},
     {nullptr} /* Sentinel */
@@ -225,7 +228,7 @@ static PyObject *dump_memory(Interpreter *self, PyObject *args) {
     return nullptr;
 
   for (; it != memory.rend(); it++) {
-    PyObject *py_int = PyLong_FromUnsignedLong(static_cast<unsigned long>(*it));
+    PyObject *py_int = PyLong_FromUnsignedLongLong(static_cast<unsigned long long>(*it));
     if (!py_int) {
       Py_DECREF(list);
       return nullptr;
@@ -270,10 +273,9 @@ static PyObject *set_memory(Interpreter *self, PyObject *args) {
 }
 
 static PyObject *repr(Interpreter *self) {
-  std::stringstream ss;
-  ss << "<Interpreter stream="
-     << PyUnicode_AsUTF8(instream::repr(self->inStreamObj)) << ">";
-  return PyUnicode_FromString(ss.str().c_str());
+  std::string str = "<Interpreter stream=";
+  str += _repr(self->inStreamObj) + ">";
+  return PyUnicode_FromString(str.c_str());
 }
 
 #pragma clang diagnostic push
@@ -288,7 +290,7 @@ static PyMemberDef members[] = {
 
 static PyMethodDef methods[] = {
     {"execute", (PyCFunction)execute, METH_VARARGS},
-    {"dump_memory", (PyCFunction)dump_memory, METH_VARARGS},
+    {"dump_memory", (PyCFunction)dump_memory, METH_NOARGS},
     {"set_instream", (PyCFunction)set_instream, METH_VARARGS},
     {"set_memory", (PyCFunction)set_memory, METH_VARARGS},
     {nullptr} /* Sentinel */
@@ -323,7 +325,10 @@ static struct PyModuleDef Module = {
     .m_methods = ModuleMethods,
 };
 
-static std::map<std::string, PyTypeObject *> Types = {
+static struct {
+  const char *name;
+  PyTypeObject *type;
+} Types[] = {
     {"InStream", &instream::InStreamType},
     {"Interpreter", &interpreter::InterpreterType},
 };
@@ -332,7 +337,7 @@ static std::map<std::string, PyTypeObject *> Types = {
 
 PyMODINIT_FUNC PyInit_brainfuck(void) {
   for (auto &t : brainfuck::Types) {
-    if (PyType_Ready(t.second) < 0)
+    if (PyType_Ready(t.type) < 0)
       return nullptr;
   }
 
@@ -341,8 +346,8 @@ PyMODINIT_FUNC PyInit_brainfuck(void) {
     return nullptr;
 
   for (auto &t : brainfuck::Types) {
-    Py_INCREF(t.second);
-    PyModule_AddObject(module, t.first.c_str(), (PyObject *)t.second);
+    Py_INCREF(t.type);
+    PyModule_AddObject(module, t.name, (PyObject *)t.type);
   }
 
   return module;

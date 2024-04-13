@@ -2,36 +2,37 @@
 #include "interpreter.h"
 #include "loader.h"
 #include "utils.h"
+
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 
-int main(int argc, char **argv) {
-  using namespace bf;
-
-  std::vector<string> args;
-  for (int i = 1; i < argc; i++)
-    args.emplace_back(argv[i]);
-
-  string filename;
+struct {
+  std::string filename;
   bool do_clean = true;
-  int clean_file_flag = 0;
-  string clean_filename = "cleaned.bf";
+  int clean_flag = 0;
+  std::string clean_filename = "cleaned.bf";
+  bool calc_cost = false;
+  std::shared_ptr<bf::InStream> instream;
+} arguments;
+
+void parse_args(int argc, char **argv) {
   int infile_flag = 0;
   int input_arg_flag = 0;
-  bool calc_cost = false;
+  arguments.instream = std::make_shared<bf::InStream>();
 
-  auto instream = std::make_shared<InStream>();
+  for (int i = 1; i < argc; i++) {
+    std::string arg(argv[i]);
 
-  for (const string &arg : args) {
     if (arg[0] == '-') {
       switch (arg[1]) {
       case 'n':
-        do_clean = false;
+        arguments.do_clean = false;
         break;
       case 'o':
-        clean_file_flag = 1;
+        arguments.clean_flag = 1;
         break;
       case 'i':
         infile_flag = 1;
@@ -40,46 +41,51 @@ int main(int argc, char **argv) {
         input_arg_flag = 1;
         break;
       case 'c':
-        calc_cost = true;
+        arguments.calc_cost = true;
         break;
       default:
         break;
       }
+      continue;
+    } else if (arguments.clean_flag == 1) {
+      arguments.clean_filename = arg;
+      arguments.clean_flag = 2;
+    } else if (infile_flag == 1) {
+      infile_flag = 2;
+      arguments.instream->setup_file(arg);
+    } else if (input_arg_flag == 1) {
+      input_arg_flag = 2;
+      arguments.instream->setup_string(arg);
     } else {
-      if (clean_file_flag == 1) {
-        clean_filename = arg;
-        clean_file_flag = 2;
-      } else if (infile_flag == 1) {
-        infile_flag = 2;
-        instream->setup_file(arg);
-      } else if (input_arg_flag == 1) {
-        input_arg_flag = 2;
-        instream->setup_string(arg);
-      } else {
-        filename = arg;
-      }
+      arguments.filename = arg;
     }
   }
+}
 
-  if (filename.empty()) {
+int main(int argc, char **argv) {
+  using namespace bf;
+
+  parse_args(argc, argv);
+
+  if (arguments.filename.empty()) {
     std::cout << "Please input Brainfuck file path!" << std::endl;
     exit(1);
   }
-  string code = loader::parse_file(filename);
-  if (do_clean)
+  string code = loader::parse_file(arguments.filename);
+  if (arguments.do_clean)
     code = loader::clean_code(code);
 
-  if (clean_file_flag) {
-    std::ofstream cleaned(clean_filename);
-    if (do_clean)
+  if (arguments.clean_flag) {
+    std::ofstream cleaned(arguments.clean_filename);
+    if (arguments.do_clean)
       code = loader::split_lines(code);
     cleaned << code;
     cleaned.close();
   } else {
-    Interpreter interpreter(instream);
+    Interpreter interpreter(arguments.instream);
     auto call = [&]() { interpreter.execute(code); };
     auto cost = utils::timer_with(call);
-    if (calc_cost)
+    if (arguments.calc_cost)
       std::cout << "\nCost: " << cost << "s" << std::endl;
   }
 

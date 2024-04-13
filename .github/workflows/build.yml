@@ -22,11 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: mkdir bin
+      - run: cmake .
 
-      - run: g++ src/*.cpp -O3 -o bin/bf${{ (matrix.os == 'windows' && '.exe') || '' }}
+      - run: make bf
 
-      - run: g++ src/*.cpp -O3 -o bin/bfdbg${{ (matrix.os == 'windows' && '.exe') || '' }} -DBF_DEBUG
+      - run: make bfdbg
 
       - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} bin/
 
