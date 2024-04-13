@@ -10,32 +10,39 @@ permissions:
   contents: read
 
 jobs:
-  build-binary:
-    strategy:
-      matrix:
-        os:
-          - ubuntu
-          - windows
-    
-    name: build - ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}-latest
+  build-ubuntu:
+    name: build - ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: cmake .
+
+      - run: make bf bfdbg
+
+      - run: ls -lh bin/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bf-ubuntu
+          path: bin/
+
+  build-windows:
+    name: build - windows
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - run: cmake .
 
       - run: cmake --build . -t bf -t bfdbg -- /p:Configuration=Release
-        if: ${{ matrix.os == 'windows' }}
 
-      - run: make bf bfdbg
-        if: ${{ matrix.os == 'ubuntu' }}
-
-      - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} bin/
+      - run: dir bin/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bf-${{ matrix.os }}
-          path: bin/${{ (matrix.os == 'windows' && 'Release') || '' }}
+          name: bf-windows
+          path: bin/Release/
 
   build-pylib:
     strategy:
@@ -64,7 +71,7 @@ jobs:
       - run: |
           mkdir temp
           mv brainfuck.* temp/
-      
+
       - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} temp/
 
       - uses: actions/upload-artifact@v4
