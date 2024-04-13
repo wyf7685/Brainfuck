@@ -24,7 +24,11 @@ jobs:
 
       - run: cmake .
 
-      - run: ${{ (matrix.os == 'windows' && 'msbuild .\Brainfuck.sln /p:Configuration=Release') || 'make bf bfdbg' }}
+      - run: cmake --build . -- /p:Configuration=Release
+        if: ${{ matrix.os == 'windows' }}
+
+      - run: cmake --build .
+        if: ${{ matrix.os == 'ubuntu' }}
 
       - run: ${{ (matrix.os == 'windows' && 'dir') || 'ls -lh' }} bin/
 
