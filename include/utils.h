@@ -2,10 +2,9 @@
 
 #include <functional>
 
-namespace bf {
-namespace utils {
+namespace bf::utils {
 
 long double timer_with(std::function<void()> call);
 
-} // namespace utils
-} // namespace bf
+} // namespace bf::utils
+

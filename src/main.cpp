@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
     cleaned.close();
   } else {
     Interpreter interpreter(arguments.instream);
-    auto call = [&]() { interpreter.execute(code); };
+    auto call = [&interpreter, &code]() { interpreter.execute(code); };
     auto cost = utils::timer_with(call);
     if (arguments.calc_cost)
       std::cout << "\nCost: " << cost << "s" << std::endl;

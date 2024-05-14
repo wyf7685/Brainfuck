@@ -1,8 +1,7 @@
 #include "utils.h"
 #include <chrono>
 
-namespace bf {
-namespace utils {
+namespace bf::utils {
 
 long double timer_with(std::function<void()> call) {
   using namespace std::chrono;
@@ -14,5 +13,4 @@ long double timer_with(std::function<void()> call) {
   return static_cast<long double>(duration.count()) / 1000 / 1000;
 }
 
-} // namespace utils
-} // namespace bf
+} // namespace bf::utils

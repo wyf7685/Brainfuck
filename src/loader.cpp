@@ -3,8 +3,7 @@
 
 #include "loader.h"
 
-namespace bf {
-namespace loader {
+namespace bf::loader {
 
 string parse_line(string line) {
   size_t pos;
@@ -54,13 +53,13 @@ string parse_file(const string &filename) {
   return parse_string(code);
 }
 
+string clean_code(const string &code) {
 #ifdef BF_DEBUG
-static const string ValidCode = "><+-[],.%";
+  static const string ValidCode = "><+-[],.%";
 #else
-static const string ValidCode = "><+-[],.";
+  static const string ValidCode = "><+-[],.";
 #endif
 
-string clean_code(const string &code) {
   string result;
   for (auto it = code.begin(); it != code.end(); ++it) {
     if (ValidCode.find(*it) != string::npos) {
@@ -87,6 +86,4 @@ string split_lines(string code, size_t line_size) {
   return result;
 }
 
-} // namespace loader
-
-} // namespace bf
+} // namespace bf::loader

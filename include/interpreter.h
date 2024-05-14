@@ -1,6 +1,6 @@
 #pragma once
 
-#include "global.h"
+#include "common.h"
 #include "instream.h"
 
 #include <cstddef>
@@ -19,7 +19,9 @@ public:
   std::shared_ptr<InStream> inStream;
   std::vector<MemoryValue> memory;
 
-  Interpreter() : inStream(std::make_shared<InStream>()){};
+  Interpreter()
+      : inStream(std::make_shared<InStream>()),
+        memory(std::vector<MemoryValue>(MemorySize, 0)){};
   Interpreter(std::shared_ptr<InStream> inStream);
   void execute(const string &code);
 };
