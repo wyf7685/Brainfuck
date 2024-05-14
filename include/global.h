@@ -8,12 +8,14 @@ namespace bf {
 using std::string;
 
 class Exception : public std::exception {
-  char const *const _msg;
+  const char *const _msg;
 
 public:
   Exception() : _msg(nullptr) {}
   Exception(char const *const msg) : _msg(msg) {}
-  char const *what() const noexcept override {
+  Exception(const string msg) : _msg(msg.c_str()) {}
+  ~Exception() = default;
+  const char *what() const noexcept override {
     return _msg ? _msg : "Unkown exception";
   }
 };

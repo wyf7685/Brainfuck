@@ -1,9 +1,9 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "src/instream.h"
-#include "src/interpreter.h"
-#include "src/loader.h"
+#include "instream.h"
+#include "interpreter.h"
+#include "loader.h"
 
 #include <algorithm>
 #include <map>

@@ -11,8 +11,7 @@ void InStream::setup_stdin() { type = StreamType::Stdin; }
 void InStream::setup_file(const string &filename) {
   std::ifstream file(filename);
   if (!file.good()) {
-    string msg = "Error: Cannot open file '" + filename + "'";
-    throw Exception(msg.c_str());
+    throw Exception("Error: Cannot open file '" + filename + "'");
   }
   string line;
   while (std::getline(file, line)) {
@@ -23,7 +22,7 @@ void InStream::setup_file(const string &filename) {
 }
 
 void InStream::setup_string(const string &arg) {
-  input = arg;
+  input = arg + "\n";
   input_index = 0;
   type = StreamType::File;
 }

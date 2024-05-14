@@ -3,6 +3,7 @@
 
 bin/
 build/
+obj/
 
 CMakeFiles/
 cmake_install.cmake

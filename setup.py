@@ -17,6 +17,7 @@ extension = Extension(
         "src/loader.cpp",
         "src/utils.cpp",
     ],
+    include_dirs=["include"],
     define_macros=[("_BRAINFUCK_RELEASE", None)],
     extra_compile_args=[cxx_std_arg],
 )

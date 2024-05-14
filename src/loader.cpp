@@ -45,8 +45,7 @@ string parse_string(string str) {
 string parse_file(const string &filename) {
   std::ifstream fin(filename.c_str());
   if (!fin.good()) {
-    string msg = "Error: Cannot open file '" + filename + "'";
-    throw Exception(msg.c_str());
+    throw Exception("Error: Cannot open file '" + filename + "'");
   }
 
   string code, line;

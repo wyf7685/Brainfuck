@@ -5,7 +5,7 @@
 
 namespace bf {
 
-enum class StreamType {
+enum class StreamType : int {
   Stdin = 0,
   File,
 };
