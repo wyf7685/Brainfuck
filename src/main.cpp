@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-struct {
+static struct {
   std::string filename;
   bool do_clean = true;
   int clean_flag = 0;
@@ -18,7 +18,7 @@ struct {
   std::shared_ptr<bf::InStream> instream;
 } arguments;
 
-void parse_args(int argc, char **argv) {
+static void parse_args(int argc, char **argv) {
   int infile_flag = 0;
   int input_arg_flag = 0;
   arguments.instream = std::make_shared<bf::InStream>();
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     std::cout << "Please input Brainfuck file path!" << std::endl;
     exit(1);
   }
-  string code = loader::parse_file(arguments.filename);
+  std::string code = loader::parse_file(arguments.filename);
   if (arguments.do_clean)
     code = loader::clean_code(code);
 
